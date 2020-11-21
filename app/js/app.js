@@ -1,131 +1,65 @@
 (function() {
 
-	var content = $('#content');
-	var video = $('#webcam')[0];
 
-	var resize = function() {
-		var w = $(this).width();
-		var h = $(this).height() - 110;
-		var ratio = video.width / video.height;
-		if (content.width() > w) {
-			content.width(w);
-			content.height(w / ratio);
-		}
-		else {
-			content.height(h);
-			content.width(h * ratio);
-		}
-		content.css('left', (w - content.width()) / 2 );
-		content.css('top', ((h - content.height()) / 2) + 55 );
-	};
+	let video = document.querySelector('#webcam');
 
-	$(window).resize(resize);
-	$(window).ready(function() {
-		resize();
-		$('#watchVideo').click(function() {
-			$(".browsers").fadeOut();
-			$(".browsersWithVideo").delay(300).fadeIn();
-			$("#video-demo").delay(300).fadeIn();
-			$("#video-demo")[0].play();
-			$('.backFromVideo').fadeIn();
-			event.stopPropagation();
-			return false;
-		});
-		$('.backFromVideo a').click(function() {
-			$(".browsersWithVideo").fadeOut();
-			$('.backFromVideo').fadeOut();
-			$(".browsers").fadeIn();
-			$("#video-demo")[0].pause();
-			$('#video-demo').fadeOut();
-			event.stopPropagation();
-			return false;
-		});
-	});
-
-	function hasGetUserMedia() {
-		// Note: Opera builds are unprefixed.
-		return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
-			navigator.mozGetUserMedia || navigator.msGetUserMedia);
-	}
-
-	if (hasGetUserMedia()) {
-		$('.introduction').fadeIn();
-		$('.allow').fadeIn();
-	} else {
-		$('.browsers').fadeIn();
-		return;
-	}
-
-	var webcamError = function(e) {
-		alert('Webcam error!', e);
-	};
 
 	if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 		navigator.mediaDevices.getUserMedia({video: true}).then(function(stream) {
 			video.srcObject = stream;
 			initialize();
-		}, webcamError);
-	} else if (navigator.getUserMedia) {
-		navigator.getUserMedia({video: true}, function(stream) {
-			video.srcObject = stream;
-			initialize();
-		}, webcamError);
-	} else if (navigator.webkitGetUserMedia) {
-		navigator.webkitGetUserMedia({video:true}, function(stream) {
-			video.srcObject = window.webkitURL.createObjectURL(stream);
-			initialize();
-		}, webcamError);
-	} else {
-		//video.src = 'somevideo.webm'; // fallback.
+		});
 	}
 
-	var AudioContext = (
+
+	let AudioContext = (
 		window.AudioContext ||
 		window.webkitAudioContext ||
 		null
 	);
 
-	var timeOut, lastImageData;
-	var canvasSource = $("#canvas-source")[0];
-	var canvasBlended = $("#canvas-blended")[0];
+	let lastImageData;
+	let canvasSource = document.querySelector("#canvas-source");
+	let canvasBlended = document.querySelector("#canvas-blended");
 
-	var contextSource = canvasSource.getContext('2d');
-	var contextBlended = canvasBlended.getContext('2d');
+	let contextSource = canvasSource.getContext('2d');
+	let contextBlended = canvasBlended.getContext('2d');
 
-	var soundContext;
-	var bufferLoader;
-	var notes = [];
+	let soundContext;
+	let bufferLoader;
+	let notes = [];
 
 	// mirror video
 	contextSource.translate(canvasSource.width, 0);
 	contextSource.scale(-1, 1);
 
-	var c = 5;
-
 	function initialize() {
-		if (!AudioContext) {
-			alert("AudioContext not supported!");
-		}
-		else {
-			$('.introduction').fadeOut();
-			$('.allow').fadeOut();
-			$('.loading').delay(300).fadeIn();
-			setTimeout(loadSounds, 1000);
-		}
+		setTimeout(loadSounds, 500);
 	}
 
 	function loadSounds() {
 		soundContext = new AudioContext();
 		bufferLoader = new BufferLoader(soundContext,
-			[
-				'sounds/note1.mp3',
-				'sounds/note2.mp3',
-				'sounds/note3.mp3',
-				'sounds/note4.mp3',
-				'sounds/note5.mp3',
-				'sounds/note6.mp3',
-				'sounds/note7.mp3',
-				'sounds/note8.mp3'
+			[	'sounds/448547__tedagame__c2.ogg',
+				'sounds/448600__tedagame__d-2.ogg',
+				'sounds/448587__tedagame__f-2.ogg',
+				'sounds/448590__tedagame__g-2.ogg',
+				'sounds/448571__tedagame__a-2.ogg',
+				'sounds/448546__tedagame__c3.ogg',
+				'sounds/448608__tedagame__d3.ogg',
+				'sounds/448584__tedagame__f-3.ogg',
+				'sounds/448593__tedagame__g-3.ogg',
+				'sounds/448570__tedagame__a-3.ogg',
+				'sounds/448539__tedagame__c-4.ogg',
+				'sounds/448602__tedagame__d-4.ogg',
+				'sounds/448585__tedagame__f-4.ogg',
+				'sounds/448592__tedagame__g-4.ogg',
+				'sounds/448577__tedagame__a-4.ogg',
+				'sounds/448532__tedagame__c-5.ogg',
+				'sounds/448603__tedagame__d-5.ogg',
+				'sounds/448582__tedagame__f-5.ogg',
+				'sounds/448599__tedagame__g-5.ogg',
+				'sounds/448576__tedagame__a-5.ogg'
 			],
 			finishedLoading
 		);
@@ -133,15 +67,17 @@
 	}
 
 	function finishedLoading(bufferList) {
-		for (var i=0; i<8; i++) {
-			var source = soundContext.createBufferSource();
+
+		for (let i=0; i< bufferList.length; i++) {
+			let source = soundContext.createBufferSource();
 			source.buffer = bufferList[i];
 			source.connect(soundContext.destination);
-			var note = {
+			let note = {
 				note: source,
 				ready: true,
-				visual: $("#note" + i)
+				visual: "#note" + i
 			};
+
 			notes.push(note);
 		}
 		start();
@@ -149,13 +85,13 @@
 
 	function playSound(obj) {
 		if (!obj.ready) return;
-		var source = soundContext.createBufferSource();
+		let source = soundContext.createBufferSource();
 		source.buffer = obj.note.buffer;
 		source.connect(soundContext.destination);
 		source.start(0);
 		obj.ready = false;
 		// throttle the note
-		setTimeout(setNoteReady, 400, obj);
+		setTimeout(setNoteReady, 200, obj);
 	}
 
 	function setNoteReady(obj) {
@@ -163,14 +99,7 @@
 	}
 
 	function start() {
-		//$("#footer .instructions").show();
-		$('.loading').fadeOut();
-		$('body').addClass('black-background');
-		$(".instructions").delay(600).fadeIn();
-		$(canvasSource).delay(600).fadeIn();
-		$(canvasBlended).delay(600).fadeIn();
-		$("#xylo").delay(600).fadeIn();
-		$(".motion-cam").delay(600).fadeIn();
+		canvasSource
 		update();
 	}
 
@@ -190,7 +119,6 @@
 		blend();
 		checkAreas();
 		requestAnimFrame(update);
-//		timeOut = setTimeout(update, 1000/60);
 	}
 
 	function drawVideo() {
@@ -198,14 +126,17 @@
 	}
 
 	function blend() {
-		var width = canvasSource.width;
-		var height = canvasSource.height;
+		let width = canvasSource.width;
+		let height = canvasSource.height;
+		
 		// get webcam image data
-		var sourceData = contextSource.getImageData(0, 0, width, height);
+		let sourceData = contextSource.getImageData(0, 0, width, height);
+		// console.log(sourceData);
+
 		// create an image if the previous image doesn’t exist
 		if (!lastImageData) lastImageData = contextSource.getImageData(0, 0, width, height);
 		// create a ImageData instance to receive the blended result
-		var blendedData = contextSource.createImageData(width, height);
+		let blendedData = contextSource.createImageData(width, height);
 		// blend the 2 images
 		differenceAccuracy(blendedData.data, sourceData.data, lastImageData.data);
 		// draw the result in a canvas
@@ -223,26 +154,14 @@
 		return (value > 0x15) ? 0xFF : 0;
 	}
 
-	function difference(target, data1, data2) {
-		// blend mode difference
-		if (data1.length != data2.length) return null;
-		var i = 0;
-		while (i < (data1.length * 0.25)) {
-			target[4*i] = data1[4*i] == 0 ? 0 : fastAbs(data1[4*i] - data2[4*i]);
-			target[4*i+1] = data1[4*i+1] == 0 ? 0 : fastAbs(data1[4*i+1] - data2[4*i+1]);
-			target[4*i+2] = data1[4*i+2] == 0 ? 0 : fastAbs(data1[4*i+2] - data2[4*i+2]);
-			target[4*i+3] = 0xFF;
-			++i;
-		}
-	}
+
 
 	function differenceAccuracy(target, data1, data2) {
-		if (data1.length != data2.length) return null;
-		var i = 0;
+		let i = 0;
 		while (i < (data1.length * 0.25)) {
-			var average1 = (data1[4*i] + data1[4*i+1] + data1[4*i+2]) / 3;
-			var average2 = (data2[4*i] + data2[4*i+1] + data2[4*i+2]) / 3;
-			var diff = threshold(fastAbs(average1 - average2));
+			let average1 = (data1[4*i] + data1[4*i+1] + data1[4*i+2]) / 3;
+			let average2 = (data2[4*i] + data2[4*i+1] + data2[4*i+2]) / 3;
+			let diff = threshold(fastAbs(average1 - average2));
 			target[4*i] = diff;
 			target[4*i+1] = diff;
 			target[4*i+2] = diff;
@@ -253,10 +172,10 @@
 
 	function checkAreas() {
 		// loop over the note areas
-		for (var r=0; r<8; ++r) {
-			var blendedData = contextBlended.getImageData(1/8*r*video.width, 0, video.width/8, 100);
-			var i = 0;
-			var average = 0;
+		for (let r=0; r<20; ++r) {
+			let blendedData = contextBlended.getImageData(1/20*r*video.width, 280, video.width/20, 50);
+			let i = 0;
+			let average = 0;
 			// loop over the pixels
 			while (i < (blendedData.data.length * 0.25)) {
 				// make an average between the color channel
@@ -264,18 +183,17 @@
 				++i;
 			}
 			// calculate an average between of the color values of the note area
-			average = Math.round(average / (blendedData.data.length * 0.25));
-			if (average > 10) {
-				// over a small limit, consider that a movement is detected
-				// play a note and show a visual feedback to the user
+			average = Math.round(average / (blendedData.data.length * 0.60));
+			
+			if (average > 60) {
 				playSound(notes[r]);
-//				notes[r].visual.show();
-//				notes[r].visual.fadeOut();
-				if(!notes[r].visual.is(':animated')) {
-					notes[r].visual.css({opacity:1});
-					notes[r].visual.animate({opacity:0}, 700);
+				console.log(average);
+			
+				if(notes[r]){
+					let key=document.querySelector(notes[r].visual)
+					let timerId =setTimeout(key.classList.add('active'), 1000)
+					setTimeout(() => { clearInterval(timerId); key.classList.remove('active');}, 1000);
 				}
-
 			}
 		}
 	}
